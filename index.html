@@ -52,7 +52,31 @@ http://www.d3noob.org/2013/01/adding-tooltips-to-d3js-graph.html
 Mike Bostock, Pie Chart Legend
 http://bl.ocks.org/mbostock/3888852  */
 
-		
+function interpolateColor(color1, color2, factor) {
+    if (arguments.length < 3) { 
+        factor = 0.5; 
+    }
+    var result = color1.slice();
+    for (var i = 0; i < 3; i++) {
+        result[i] = Math.round(result[i] + factor * (color2[i] - color1[i]));
+    }
+    return result;
+};
+// My function to interpolate between two colors completely, returning an array
+function interpolateColors(color1, color2, steps) {
+    var stepFactor = 1 / (steps - 1),
+        interpolatedColorArray = [];
+
+    color1 = color1.match(/\d+/g).map(Number);
+    color2 = color2.match(/\d+/g).map(Number);
+
+    for(var i = 0; i < steps; i++) {
+        interpolatedColorArray.push(interpolateColor(color1, color2, stepFactor * i));
+    }
+
+    return interpolatedColorArray;
+}
+
 //Width and height of map
 var width = 960;
 var height = 500;
@@ -68,9 +92,11 @@ var path = d3.geo.path()               // path generator that will convert GeoJS
 
 		
 // Define linear scale for output
+var colorArray = interpolateColors("rgb(25,25,112)", "rgb(250,250,10)", 15).map(arr => `rgb(${arr[0]},${arr[1]},${arr[2]})`) 
+// console.log(colorArray)
 var color = d3.scale.linear()
-			  .range(["rgb(213,222,217)","rgb(69,173,168)","rgb(84,36,55)","rgb(217,91,67)"]);
-
+			  .range(["rgb(213,222,217)","rgb(0,0,255)","rgb(13,206,250)", "rgb(135,206,250)"]);
+			// .range(colorArray)
 var legendText = ["Cities Lived", "States Lived", "States Visited", "Nada"];
 
 //Create SVG element and append map to the SVG
@@ -128,7 +154,7 @@ svg.selectAll("path")
 
 	// Get data value
 	var value = d.properties.visited;
-
+ 
 	if (value) {
 	//If value exists…
 	return color(value);
@@ -136,7 +162,16 @@ svg.selectAll("path")
 	//If value is undefined…
 	return "rgb(213,222,217)";
 	}
-});
+})	
+.on("mouseover", function(d) {    
+	console.log(d)  
+		div.transition()        
+      	   .duration(200)      
+           .style("opacity", .9);      
+           div.text(d.properties.name + '\n' + d.properties.visited)
+           .style("left", (d3.event.pageX) + "px")     
+           .style("top", (d3.event.pageY) + "px");    
+	})  
 
 		 
 // Map the cities I have lived in!
@@ -155,7 +190,7 @@ svg.selectAll("circle")
 	.attr("r", function(d) {
 		return Math.sqrt(d.years) * 4;
 	})
-		.style("fill", "rgb(217,91,67)")	
+		.style("fill", "rgb(135,206,250)")	
 		.style("opacity", 0.85)	
 
 	// Modification of custom tooltip code provided by Malcolm Maclean, "D3 Tips and Tricks" 
